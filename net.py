@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torchvision.transforms import transforms
+from pIL import Image
 
 class Network(nn.Module):
     def __init__(self):
@@ -42,7 +44,7 @@ class Network(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
         return output1, output2
-
+'''
 class Loss(nn.Moudle):
     def __init__(self, margin=2.0):
         super(Loss, self).__init__()
@@ -53,6 +55,8 @@ class Loss(nn.Moudle):
                             (label)*torch.pow(torch.clamp(self.margin - 
                             euclidean_distance, min=0.0),2))
         return loss_contrastive
+'''
+
 
 cuda_avail = torch.cuda.is_available()
 
@@ -60,3 +64,30 @@ if cuda_avail:
     net = Network().cuda()
 else:
     net = Network()
+
+def open_image(image_path):
+    print ("Opening Image")
+    image = Image.Open(image_path)
+    transformation = transforms.Compose([
+        transforms.Resize(400),
+        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)),
+        transforms.ToTensor()
+        ])
+    image_tensor = transformation(image).float()
+    image_tensor = image_tensor.unsqueeze(0)
+
+    if cuda:
+        image_tensor.cuda()
+
+    input = Variable(image_tensor)
+    return input
+
+
+image_path1 = "folder1/image1.jpg"
+image_path2 = "folder2/image2.jpg"
+
+input1 = open_image(image_path1)
+input2 = open_image(image_path2)
+
+output1, output2 = net(input1,input2) 
+# Output1 and Output2 contains features from input1 and input2
